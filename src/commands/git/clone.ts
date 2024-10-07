@@ -25,7 +25,7 @@
 // After those two, the pulled repo don't have a remote (github link). So we add it.
 
 import path from 'path';
-import execa from 'execa';
+import { execa } from 'execa';
 import fse from 'fs-extra';
 import { getRemoteHead as getRemoteHeadBranch } from './getRemoteHeadBranch';
 import { getRepositoryGitUrl } from './utils';

@@ -1,6 +1,6 @@
 // git diff-index --quiet HEAD
 // based on / copied https://github.com/JPeer264/node-is-git-dirty/blob/main/index.ts
-import execa from 'execa';
+import { execa } from 'execa';
 
 export type Dirtiness = 'clean' | 'dirty' | 'unknown' | 'error';
 

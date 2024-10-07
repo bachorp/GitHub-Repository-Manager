@@ -1,5 +1,5 @@
 import path from 'path';
-import execa from 'execa';
+import { execa } from 'execa';
 import fse from 'fs-extra';
 import { getRepositoryGitUrl, pathHasGit } from './utils';
 

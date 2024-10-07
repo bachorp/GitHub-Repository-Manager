@@ -1,7 +1,7 @@
 import path from 'path';
-import execa from 'execa';
+import { execa } from 'execa';
 import GitUrlParse from 'git-url-parse';
-import globby from 'globby';
+import { globby } from 'globby';
 import { Configs } from '../../main/configs';
 import { replaceTildeToHomedir } from '../../main/utils';
 

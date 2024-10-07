@@ -1,4 +1,4 @@
-import execa from 'execa';
+import { execa } from 'execa';
 
 /**
  * Get git HEAD branch.
