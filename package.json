@@ -10,7 +10,7 @@
   },
   "main": "./dist/extension.js",
   "engines": {
-    "vscode": "^1.58.0"
+    "vscode": "^1.94.0"
   },
   "repository": {
     "type": "git",
@@ -53,25 +53,25 @@
   ],
   "prettier": "prettier-config-gev",
   "dependencies": {
-    "@octokit/core": "3.5.1",
-    "@octokit/rest": "18.12.0",
-    "execa": "5.1.1",
-    "fs-extra": "10.0.1",
-    "git-url-parse": "11.6.0",
-    "globby": "11.1.0"
+    "@octokit/core": "6.1.2",
+    "@octokit/rest": "21.0.2",
+    "@vscode/vsce": "^3.1.1",
+    "execa": "9.4.0",
+    "fs-extra": "11.2.0",
+    "git-url-parse": "15.0.0",
+    "globby": "14.0.2"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.13",
-    "@types/git-url-parse": "^9.0.1",
-    "@types/node": "^17.0.21",
-    "@types/vscode": "1.58.0",
-    "esbuild": "0.15.13",
-    "eslint-config-gev": "3.0.1",
+    "@types/fs-extra": "11.0.4",
+    "@types/git-url-parse": "^9.0.3",
+    "@types/node": "^22.7.4",
+    "@types/vscode": "1.94.0",
+    "esbuild": "0.24.0",
+    "eslint-config-gev": "4.5.1",
     "npm-run-all": "4.1.5",
-    "prettier": "2.7.1",
-    "prettier-config-gev": "1.1.0",
-    "typescript": "^4.8.4",
-    "vsce": "2.13.0"
+    "prettier": "3.3.3",
+    "prettier-config-gev": "1.2.0",
+    "typescript": "~5.4.0"
   },
   "contributes": {
     "colors": [
