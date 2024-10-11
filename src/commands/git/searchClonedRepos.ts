@@ -1,95 +1,112 @@
-import path from 'path';
-import { execa } from 'execa';
-import GitUrlParse from 'git-url-parse';
-import { globby } from 'globby';
-import { Configs } from '../../main/configs';
-import { replaceTildeToHomedir } from '../../main/utils';
+import path from 'node:path'
+import { execa } from 'execa'
+import GitUrlParse from 'git-url-parse'
+import { globby } from 'globby'
+import { Configs } from '../../main/configs'
+import { replaceTildeToHomedir } from '../../main/utils'
 
 export type DirWithGitUrl = {
-  dirPath: string;
-  gitUrl: string;
-};
-async function getGitUrls(dirsPath: string[]): Promise<DirWithGitUrl[]> {
-  const dirsWithGitUrl: DirWithGitUrl[] = [];
+    dirPath: string
+    gitUrl: string
+}
 
-  // forEach would call all execs 'at the same time', as it doesnt wait await.
-  for (const dirPath of dirsPath)
-    try {
-      // https://stackoverflow.com/a/23682620/10247962
-      // was using git remote -v, but git ls-remote --get-url seems to also do the job with a single output.
-      const { stdout: result } = await execa('git', ['ls-remote', '--get-url'], {
-        cwd: dirPath,
-      });
+const getGitUrls = async (
+    dirsPath: Array<string>,
+): Promise<Array<DirWithGitUrl>> => {
+    const dirsWithGitUrl: Array<DirWithGitUrl> = []
 
-      // Remove whitespaces chars.
-      const url = result.trim();
-      // TODO we can allow repos without url, to allow repos without remote
-      if (url) {
-        // Parse the git URL into a repository URL, as it could be the git@github.com:author/reponame url pattern.
-        // This changes any known kind to the https://github.com/author/reponame pattern.
-        const gitUrl = GitUrlParse(url)
-          .toString('https')
-          .replace(/\.git$/, ''); // remove final .git
-        dirsWithGitUrl.push({ gitUrl, dirPath });
-      }
-    } catch (err: any) {
-      // If error, it's because there isn't a remote. No need to manage it, may be left empty.
+    // forEach would call all execs 'at the same time', as it doesnt wait await.
+    for (const dirPath of dirsPath) {
+        try {
+            // https://stackoverflow.com/a/23682620/10247962
+            // was using git remote -v, but git ls-remote --get-url seems to also do the job with a single output.
+            const { stdout: result } = await execa(
+                'git',
+                ['ls-remote', '--get-url'],
+                {
+                    cwd: dirPath,
+                },
+            )
+
+            // Remove whitespaces chars.
+            const url = result.trim()
+
+            // TODO we can allow repos without url, to allow repos without remote
+            if (url) {
+                // Parse the git URL into a repository URL, as it could be the git@github.com:author/reponame url pattern.
+                // This changes any known kind to the https://github.com/author/reponame pattern.
+                const gitUrl = GitUrlParse(url)
+                    .toString('https')
+                    .replace(/\.git$/, '') // remove final .git
+
+                dirsWithGitUrl.push({ gitUrl, dirPath })
+            }
+        } catch (err: any) {
+            // If error, it's because there isn't a remote. No need to manage it, may be left empty.
+        }
     }
 
-  return dirsWithGitUrl;
+    return dirsWithGitUrl
 }
 
-export let noLocalSearchPaths: boolean = false;
+export let noLocalSearchPaths = false
 
 interface StartingSearchPaths {
-  path: string;
-  availableDepth: number;
+    path: string
+    availableDepth: number
 }
-function getStartingSearchPaths(): StartingSearchPaths[] {
-  const searchPaths: StartingSearchPaths[] = [];
 
-  if (Configs.gitDefaultCloneDir)
-    searchPaths.push({
-      path: Configs.gitDefaultCloneDir,
-      availableDepth: Configs.defaultCloneDirectoryMaximumDepth,
-    });
+const getStartingSearchPaths = (): Array<StartingSearchPaths> => {
+    const searchPaths: Array<StartingSearchPaths> = []
 
-  return searchPaths;
+    if (Configs.gitDefaultCloneDir) {
+        searchPaths.push({
+            path: Configs.gitDefaultCloneDir,
+            availableDepth: Configs.defaultCloneDirectoryMaximumDepth,
+        })
+    }
+
+    return searchPaths
 }
 
 // TODO: Add custom dirs
 // This method returns all found git folders in the search location regardless if they are in the users Github or not
-export async function getLocalReposPathAndUrl(): Promise<DirWithGitUrl[]> {
-  // If the user don't have any repository in GitHub
+export const getLocalReposPathAndUrl = async (): Promise<
+    Array<DirWithGitUrl>
+> => {
+    // If the user don't have any repository in GitHub
 
-  // Get starting search paths.
-  const startingSearchPaths = getStartingSearchPaths();
+    // Get starting search paths.
+    const startingSearchPaths = getStartingSearchPaths()
 
-  noLocalSearchPaths = startingSearchPaths.length === 0;
-  if (!noLocalSearchPaths) return [];
+    noLocalSearchPaths = startingSearchPaths.length === 0
+    if (!noLocalSearchPaths) {
+        return []
+    }
 
-  // Get local repositories paths.
-  const repositoriesPaths: string[] = [];
+    // Get local repositories paths.
+    const repositoriesPaths: Array<string> = []
 
-  const ignore = Configs.directoriesToIgnore
-    .filter((d) => !/\.git\/?$/.test(d)) // Remove .git if present in ignore list. We need it!
-    .map((d) => `**/${d}`); // Add **/ to the patterns
+    const ignore = Configs.directoriesToIgnore
+        .filter((d) => !/\.git\/?$/.test(d)) // Remove .git if present in ignore list. We need it!
+        .map((d) => `**/${d}`) // Add **/ to the patterns
 
-  for (const startingSearchPath of startingSearchPaths)
-    repositoriesPaths.push(
-      ...(
-        await globby('**/.git', {
-          deep: startingSearchPath.availableDepth,
-          cwd: replaceTildeToHomedir(startingSearchPath.path),
-          followSymbolicLinks: false,
-          absolute: true,
-          ignore,
-          caseSensitiveMatch: false,
-          onlyDirectories: true,
-          onlyFiles: false,
-        })
-      ).map((gitPath) => path.resolve(gitPath, '..')),
-    );
+    for (const startingSearchPath of startingSearchPaths) {
+        repositoriesPaths.push(
+            ...(
+                await globby('**/.git', {
+                    deep: startingSearchPath.availableDepth,
+                    cwd: replaceTildeToHomedir(startingSearchPath.path),
+                    followSymbolicLinks: false,
+                    absolute: true,
+                    ignore,
+                    caseSensitiveMatch: false,
+                    onlyDirectories: true,
+                    onlyFiles: false,
+                })
+            ).map((gitPath) => path.resolve(gitPath, '..')),
+        )
+    }
 
-  return await getGitUrls(repositoriesPaths);
+    return await getGitUrls(repositoriesPaths)
 }

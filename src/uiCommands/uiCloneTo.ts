@@ -1,8 +1,8 @@
-import path from 'path';
-import { commands, Uri, window, workspace } from 'vscode';
-import { cloneRepo } from '../commands/git/clone';
-import { Configs } from '../main/configs';
-import { User } from '../store/user';
+import path from 'node:path'
+import { Uri, commands, window, workspace } from 'vscode'
+import { cloneRepo } from '../commands/git/clone'
+import { Configs } from '../main/configs'
+import { User } from '../store/user'
 
 // Made to look similar to vscode clone command. Also, took some small pieces from it.
 // uses the git.defaultCloneDirectory setting, as, you know, the default clone directory.
@@ -16,91 +16,101 @@ import { User } from '../store/user';
 
 // TODO: Add cancel button
 /** Doesn't throw errors. */
-export async function uiCloneTo({
-  ownerLogin,
-  name,
-  reloadRepos,
+export const uiCloneTo = async ({
+    ownerLogin,
+    name,
+    reloadRepos,
 }: {
-  /** The repository name */
-  name: string;
-  /** The owner login */
-  ownerLogin: string;
-  /** If should reloadRepos() on clone success. */
-  reloadRepos: boolean;
-}): Promise<void> {
-  if (!User.token) throw new Error('User token is not set!');
+    /** The repository name */
+    name: string
+    /** The owner login */
+    ownerLogin: string
+    /** If should reloadRepos() on clone success. */
+    reloadRepos: boolean
+}): Promise<void> => {
+    if (!User.token) {
+        throw new Error('User token is not set!')
+    }
 
-  let labelRepoName = `/${name}`;
-  if (labelRepoName.length >= 15) labelRepoName = `${labelRepoName.substr(0, 12)}...`;
+    let labelRepoName = `/${name}`
 
-  let parentPath: string = '';
+    if (labelRepoName.length >= 15) {
+        labelRepoName = `${labelRepoName.substr(0, 12)}...`
+    }
 
-  if (!Configs.alwaysCloneToDefaultDirectory) {
-    const thenable = await window.showOpenDialog({
-      defaultUri: Uri.file(Configs.defaultCloneToDir),
-      openLabel: `Clone ${labelRepoName} here`,
-      canSelectFiles: false,
-      canSelectFolders: true,
-      canSelectMany: false,
-    });
+    let parentPath = ''
 
-    if (!thenable)
-      // Cancel if quitted dialog
-      return;
+    if (!Configs.alwaysCloneToDefaultDirectory) {
+        const thenable = await window.showOpenDialog({
+            defaultUri: Uri.file(Configs.defaultCloneToDir),
+            openLabel: `Clone ${labelRepoName} here`,
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+        })
 
-    parentPath = thenable[0]!.fsPath;
-  } else {
-    parentPath = Configs.defaultCloneToDir;
-  }
+        if (!thenable) {
+            // Cancel if quitted dialog
+            return
+        }
 
-  const repoPath = path.join(parentPath, name);
-  const uri = Uri.file(repoPath);
+        parentPath = thenable[0]?.fsPath
+    } else {
+        parentPath = Configs.defaultCloneToDir
+    }
 
-  // Will leave it as status bar until we have a cancel button.
-  const statusBar = window.setStatusBarMessage(`Cloning ${name} to ${repoPath}...`);
-  try {
-    await cloneRepo({
-      owner: ownerLogin,
-      repositoryName: name,
-      parentPath,
-      token: User.token,
-    });
-    statusBar.dispose();
-  } catch (err: any) {
-    statusBar.dispose();
-    void window.showErrorMessage(err.message);
-    return;
-  }
+    const repoPath = path.join(parentPath, name)
+    const uri = Uri.file(repoPath)
 
-  await Promise.all([
-    reloadRepos ? User.reloadRepos() : undefined,
-    (async () => {
-      const openStr = 'Open';
-      const openInNewWindowStr = 'Open in New Window';
-      const addToWorkspaceStr = 'Add to Workspace';
+    // Will leave it as status bar until we have a cancel button.
+    const statusBar = window.setStatusBarMessage(
+        `Cloning ${name} to ${repoPath}...`,
+    )
 
-      const action = await window.showInformationMessage(
-        `Cloned ${name} to ${repoPath}!`,
-        openStr,
-        openInNewWindowStr,
-        addToWorkspaceStr,
-      );
+    try {
+        await cloneRepo({
+            owner: ownerLogin,
+            repositoryName: name,
+            parentPath,
+            token: User.token,
+        })
+        statusBar.dispose()
+    } catch (err: any) {
+        statusBar.dispose()
+        void window.showErrorMessage(err.message)
 
-      switch (action) {
-        case openStr:
-          void commands.executeCommand('vscode.openFolder', uri);
-          break;
-        case openInNewWindowStr:
-          void commands.executeCommand('vscode.openFolder', uri, true);
-          break;
-        case addToWorkspaceStr:
-          workspace.updateWorkspaceFolders(
-            workspace.workspaceFolders?.length ?? 0,
-            0,
-            { uri },
-          );
-          break;
-      }
-    })(),
-  ]);
+        return
+    }
+
+    await Promise.all([
+        reloadRepos ? User.reloadRepos() : undefined,
+        (async () => {
+            const openStr = 'Open'
+            const openInNewWindowStr = 'Open in New Window'
+            const addToWorkspaceStr = 'Add to Workspace'
+
+            const action = await window.showInformationMessage(
+                `Cloned ${name} to ${repoPath}!`,
+                openStr,
+                openInNewWindowStr,
+                addToWorkspaceStr,
+            )
+
+            switch (action) {
+                case openStr:
+                    void commands.executeCommand('vscode.openFolder', uri)
+                    break
+                case openInNewWindowStr:
+                    void commands.executeCommand('vscode.openFolder', uri, true)
+                    break
+                case addToWorkspaceStr:
+                    workspace.updateWorkspaceFolders(
+                        workspace.workspaceFolders?.length ?? 0,
+                        0,
+                        { uri },
+                    )
+                    break
+            }
+        })(),
+    ])
 }

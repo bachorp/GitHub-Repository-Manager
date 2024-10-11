@@ -23,10 +23,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
-    "lint": "pnpm typecheck && eslint --ext js,ts .",
-    "lint:fix": "pnpm typecheck && eslint --ext js,ts . --fix",
-    "prettier": "prettier .",
-    "prettier:fix": "prettier --write .",
+    "format": "biome check --write --unsafe src && eslint --fix src",
+		"format:check": "biome check src && eslint src",
     "=== using pnpm ===": "https://github.com/microsoft/vscode-vsce/issues/421#issuecomment-1038911725",
     "esbuild:base": "esbuild ./src/main/index.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild:watch": "pnpm esbuild:base --watch",
@@ -62,6 +60,7 @@
     "globby": "14.0.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.3",
     "@types/fs-extra": "11.0.4",
     "@types/git-url-parse": "^9.0.3",
     "@types/node": "^22.7.4",
@@ -69,8 +68,6 @@
     "esbuild": "0.24.0",
     "eslint-config-gev": "4.5.1",
     "npm-run-all": "4.1.5",
-    "prettier": "3.3.3",
-    "prettier-config-gev": "1.2.0",
     "typescript": "~5.4.0"
   },
   "contributes": {
